@@ -1,0 +1,13 @@
+import { NextResponse } from 'next/server';
+import { spawn } from 'child_process';
+
+export async function POST() {
+  // รันบอท v2.0 แบบ background
+  const bot = spawn('node', ['../ttm-ticket-bot-v2/ttm-ticket-bot-v2.js'], {
+    detached: true,
+    stdio: 'ignore'
+  });
+  bot.unref();
+
+  return NextResponse.json({ success: true, message: 'บอทเริ่มทำงานแล้ว' });
+}
