@@ -1,0 +1,56 @@
+// captcha-solver.js
+const axios = require('axios');
+require('dotenv').config();
+
+const CAPSOLVER_KEY = process.env.CAPSOLVER_API_KEY;
+
+async function solveReCaptcha(page) {
+  console.log("🔄 พบ CAPTCHA กำลังแก้...");
+
+  try {
+    const siteKey = await page.evaluate(() => {
+      const el = document.querySelector('.g-recaptcha, [data-sitekey]');
+      return el ? el.getAttribute('data-sitekey') : null;
+    });
+
+    if (!siteKey) return false;
+
+    const task = {
+      clientKey: CAPSOLVER_KEY,
+      task: {
+        type: "ReCaptchaV2TaskProxyLess",
+        websiteURL: page.url(),
+        websiteKey: siteKey,
+        isInvisible: false
+      }
+    };
+
+    const createRes = await axios.post('https://api.capsolver.com/createTask', task);
+    const taskId = createRes.data.taskId;
+
+    for (let i = 0; i < 40; i++) {
+      await new Promise(r => setTimeout(r, 4000));
+      const result = await axios.post('https://api.capsolver.com/getTaskResult', {
+        clientKey: CAPSOLVER_KEY,
+        taskId
+      });
+
+      if (result.data.status === "ready") {
+        const token = result.data.solution.gRecaptchaResponse;
+        console.log("✅ CAPTCHA แก้สำเร็จ!");
+
+        await page.evaluate((token) => {
+          const textarea = document.querySelector('[name="g-recaptcha-response"]');
+          if (textarea) textarea.value = token;
+        }, token);
+
+        return true;
+      }
+    }
+  } catch (e) {
+    console.error("CAPTCHA Error:", e.message);
+  }
+  return false;
+}
+
+module.exports = { solveReCaptcha };
