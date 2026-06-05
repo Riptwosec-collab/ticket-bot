@@ -1,12 +1,6 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
 import './globals.css';
 import { Toaster } from 'sonner';
-
-const inter = Inter({ 
-  subsets: ['latin', 'thai'],
-  weight: ['400', '500', '600', '700'],
-});
 
 export const metadata: Metadata = {
   title: 'TTM Bot v2.1',
@@ -20,7 +14,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="th">
-      <body className={inter.className}>
+      <body>
         {children}
         <Toaster position="top-center" richColors closeButton />
       </body>
