@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Play, Square, Activity, Users } from 'lucide-react';
+import { Play, Square, Activity, Users, BookOpen } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 
@@ -58,6 +58,13 @@ export default function Dashboard() {
               className="flex items-center gap-2 bg-zinc-900 hover:bg-zinc-800 px-6 py-3.5 rounded-2xl font-semibold text-lg"
             >
               📜 Live Logs
+            </Link>
+
+            <Link 
+              href="/guide" 
+              className="flex items-center gap-2 bg-zinc-900 hover:bg-zinc-800 px-6 py-3.5 rounded-2xl font-semibold text-lg"
+            >
+              <BookOpen className="w-5 h-5" /> วิธีใช้งาน
             </Link>
 
             <button 
