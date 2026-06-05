@@ -1,0 +1,89 @@
+'use client';
+
+import { useEffect, useState, useRef } from 'react';
+import { ArrowLeft, Trash2, Pause, Play } from 'lucide-react';
+import Link from 'next/link';
+
+export default function LiveLogsPage() {
+  const [logs, setLogs] = useState<string[]>([]);
+  const [isPaused, setIsPaused] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const eventSource = new EventSource('/api/logs/stream');
+
+    eventSource.onmessage = (event) => {
+      if (isPaused) return;
+      try {
+        const data = JSON.parse(event.data);
+        if (data.line) {
+          setLogs(prev => [...prev.slice(-250), data.line]);
+        }
+      } catch (_) {}
+    };
+
+    return () => eventSource.close();
+  }, [isPaused]);
+
+  // Auto scroll ลงล่าง
+  useEffect(() => {
+    if (containerRef.current && !isPaused) {
+      containerRef.current.scrollTop = containerRef.current.scrollHeight;
+    }
+  }, [logs, isPaused]);
+
+  const clearLogs = () => setLogs([]);
+
+  const getColor = (line: string) => {
+    if (line.includes('SUCCESS') || line.includes('✅')) return 'text-emerald-400';
+    if (line.includes('ERROR') || line.includes('❌')) return 'text-red-400';
+    if (line.includes('CAPTCHA')) return 'text-amber-400';
+    return 'text-zinc-300';
+  };
+
+  return (
+    <div className="min-h-screen bg-zinc-950 text-white p-8">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex justify-between items-center mb-8">
+          <div className="flex items-center gap-4">
+            <Link href="/" className="flex items-center gap-2 text-zinc-400 hover:text-white">
+              <ArrowLeft /> กลับ Dashboard
+            </Link>
+            <h1 className="text-4xl font-bold">📜 Live Logs (Real-time)</h1>
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              onClick={() => setIsPaused(!isPaused)}
+              className="flex items-center gap-2 px-5 py-2.5 bg-zinc-900 hover:bg-zinc-800 rounded-2xl"
+            >
+              {isPaused ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
+              {isPaused ? 'Resume' : 'Pause'}
+            </button>
+            <button
+              onClick={clearLogs}
+              className="flex items-center gap-2 px-5 py-2.5 bg-red-600 hover:bg-red-700 rounded-2xl"
+            >
+              <Trash2 className="w-4 h-4" /> Clear Logs
+            </button>
+          </div>
+        </div>
+
+        <div 
+          ref={containerRef}
+          className="bg-black border border-zinc-800 rounded-3xl p-6 h-[78vh] overflow-y-auto font-mono text-sm leading-relaxed"
+        >
+          {logs.length === 0 ? (
+            <div className="h-full flex items-center justify-center text-zinc-500">
+              รอ log จากบอท...<br />กรุณาเริ่มบอทที่หน้า Dashboard ก่อน
+            </div>
+          ) : (
+            logs.map((log, i) => (
+              <div key={i} className={getColor(log)}>{log}</div>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
