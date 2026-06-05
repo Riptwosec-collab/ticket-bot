@@ -1,15 +1,16 @@
 {
-  "name": "ttm-ticket-bot",
-  "version": "1.3.0",
-  "description": "ThaiTicketMajor + Ticketmelon Auto Bot with CAPTCHA Solver",
-  "main": "ttm-ticket-bot.js",
+  "name": "ttm-ticket-bot-v2",
+  "version": "2.0.0",
+  "description": "ThaiTicketMajor + Ticketmelon Ultra Stealth Bot v2.0 - Full Features",
+  "main": "ttm-ticket-bot-v2.js",
   "scripts": {
-    "start": "node ttm-ticket-bot.js",
-    "dev": "node ttm-ticket-bot.js"
+    "start": "node ttm-ticket-bot-v2.js"
   },
   "dependencies": {
-    "axios": "^1.7.0",
-    "dotenv": "^16.4.0",
+    "axios": "^1.7.2",
+    "dotenv": "^16.4.5",
+    "node-notifier": "^10.0.1",
+    "play-sound": "^1.1.6",
     "playwright": "^1.45.0",
     "playwright-extra": "^4.3.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2"
