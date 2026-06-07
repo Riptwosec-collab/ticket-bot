@@ -7,21 +7,24 @@ import Link from 'next/link';
 
 type BotStatus = {
   email: string;
-  proxy: string;
+  event?: string;
   status: string;
-  zone: string;
   lastAction: string;
+  timestamp?: string;
 };
 
+type BotStatusMap = Record<string, BotStatus>;
+
 export default function Dashboard() {
-  const [bots, setBots] = useState<BotStatus[]>([]);
+  const [bots, setBots] = useState<BotStatusMap>({});
   const [isRunning, setIsRunning] = useState(false);
   const [message, setMessage] = useState('Ready');
+  const botList = Object.values(bots);
 
   async function refreshStatus() {
     const res = await fetch('/api/status', { cache: 'no-store' });
     const data = await res.json();
-    setBots(data.bots || []);
+    setBots(data.bots || {});
     setIsRunning(Boolean(data.isRunning));
     setMessage(data.message || 'Ready');
   }
@@ -52,7 +55,7 @@ export default function Dashboard() {
     refreshStatus().catch(() => undefined);
     const interval = setInterval(() => {
       refreshStatus().catch(() => undefined);
-    }, 3000);
+    }, 2500);
 
     return () => clearInterval(interval);
   }, []);
@@ -120,7 +123,7 @@ export default function Dashboard() {
               <Activity className="h-6 w-6" />
               <span className="font-medium">Running processes</span>
             </div>
-            <div className="text-5xl font-bold">{bots.length}</div>
+            <div className="text-5xl font-bold">{botList.filter((bot) => bot.status === 'running').length}</div>
           </div>
 
           <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-6">
@@ -128,7 +131,7 @@ export default function Dashboard() {
               <Users className="h-6 w-6" />
               <span className="font-medium">Configured accounts</span>
             </div>
-            <div className="text-5xl font-bold">0</div>
+            <div className="text-5xl font-bold">{botList.length}</div>
           </div>
 
           <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-6">
@@ -138,11 +141,11 @@ export default function Dashboard() {
         </section>
 
         <section>
-          <h2 className="mb-4 text-2xl font-semibold">Status</h2>
+          <h2 className="mb-4 text-2xl font-semibold">Real-time Account Status</h2>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {bots.length > 0 ? (
-              bots.map((bot, index) => (
+            {botList.length > 0 ? (
+              botList.map((bot, index) => (
                 <motion.div
                   key={`${bot.email}-${index}`}
                   whileHover={{ scale: 1.01 }}
@@ -151,28 +154,38 @@ export default function Dashboard() {
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <div className="text-xl font-semibold">{bot.email}</div>
-                      <div className="mt-1 text-sm text-zinc-400">Proxy: {bot.proxy}</div>
+                      <div className="mt-1 truncate text-sm text-zinc-400">{bot.event || 'No event URL'}</div>
                     </div>
-                    <div className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-medium text-emerald-400">
+                    <div
+                      className={`rounded-full px-3 py-1 text-xs font-medium ${
+                        bot.status === 'running'
+                          ? 'bg-emerald-500/20 text-emerald-400'
+                          : 'bg-zinc-700 text-zinc-300'
+                      }`}
+                    >
                       {bot.status}
                     </div>
                   </div>
                   <div className="mt-6 space-y-2 text-sm">
                     <div className="flex justify-between gap-4">
-                      <span className="text-zinc-400">Zone</span>
-                      <span className="font-medium">{bot.zone}</span>
-                    </div>
-                    <div className="flex justify-between gap-4">
                       <span className="text-zinc-400">Last action</span>
                       <span className="text-right font-medium">{bot.lastAction}</span>
+                    </div>
+                    <div className="flex justify-between gap-4 text-xs text-zinc-500">
+                      <span>Updated</span>
+                      <span>
+                        {bot.timestamp
+                          ? new Date(bot.timestamp).toLocaleTimeString('th-TH')
+                          : 'unknown'}
+                      </span>
                     </div>
                   </div>
                 </motion.div>
               ))
             ) : (
               <div className="col-span-full rounded-lg border border-zinc-800 bg-zinc-900 p-12 text-center">
-                <h3 className="text-2xl font-semibold">No local process is running</h3>
-                <p className="mt-2 text-zinc-400">Use Live Logs to inspect output written to logs/bot.log.</p>
+                <h3 className="text-2xl font-semibold">No account status yet</h3>
+                <p className="mt-2 text-zinc-400">Write account states to status.json to show them here.</p>
               </div>
             )}
           </div>

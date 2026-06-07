@@ -31,3 +31,25 @@ logs/bot.log
 ```
 
 Create that file or let another local process write to it if you want lines to appear in the Live Logs page.
+
+## Account Status
+
+The dashboard reads account status from:
+
+```text
+status.json
+```
+
+Expected shape:
+
+```json
+{
+  "user@example.com": {
+    "email": "user@example.com",
+    "event": "https://example.com/event",
+    "status": "running",
+    "lastAction": "Checking event page",
+    "timestamp": "2026-06-08T10:00:00.000Z"
+  }
+}
+```

@@ -39,6 +39,15 @@ export default function GuidePage() {
             </p>
           </section>
 
+          <section className="rounded-lg border border-zinc-800 bg-zinc-900 p-6">
+            <h2 className="mb-4 text-xl font-semibold">Real-time account status</h2>
+            <p className="text-zinc-300">
+              The dashboard polls <code className="rounded bg-zinc-800 px-2 py-0.5">status.json</code> every few
+              seconds. Use one top-level key per account email, with <code>email</code>, <code>event</code>,
+              <code>status</code>, <code>lastAction</code>, and <code>timestamp</code> fields.
+            </p>
+          </section>
+
           <section className="rounded-lg border border-amber-800 bg-amber-950/40 p-6">
             <div className="flex items-start gap-3">
               <ShieldAlert className="mt-0.5 h-6 w-6 shrink-0 text-amber-300" />
