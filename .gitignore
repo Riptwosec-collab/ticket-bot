@@ -1,0 +1,6 @@
+node_modules/
+.next/
+dev-server*.log
+/logs/
+/status.json
+.env

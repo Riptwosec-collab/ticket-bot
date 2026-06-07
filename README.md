@@ -1,42 +1,55 @@
-# 🎟️ TTM Ticket Bot v2.0 - คู่มือการใช้งานฉบับสมบูรณ์
+# Ticket Dashboard
 
-## ฟีเจอร์หลัก v2.0
-- ✅ Stealth ขั้นสูง (Mouse, Fingerprint, Random behavior)
-- ✅ CAPTCHA Solver อัตโนมัติ (CapSolver)
-- ✅ Proxy Rotation + Health Check
-- ✅ Multi-Account Login + Session Persistence
-- ✅ Queue Position Monitor
-- ✅ Desktop Notification + Sound Alert
-- ✅ Auto Select Zone + Auto Buy
-- ✅ รองรับ ThaiTicketMajor + Ticketmelon
-- ✅ Logging แบบละเอียด + บันทึก session
+Local Next.js dashboard for status checks and live log viewing.
 
-## การติดตั้ง
-1. `npm install`
-2. คัดลอก `.env.example` เป็น `.env` แล้วใส่ข้อมูล
-3. `node ttm-ticket-bot-v2.js`
+## What Works
 
-## หน้าอธิบายการใช้งาน
+- Dashboard page at `/`
+- Live log viewer at `/logs`
+- Basic status, start, and stop API routes
+- Safe handling when `logs/bot.log` does not exist yet
 
-### 1. การตั้งค่า .env
-- `CAPSOLVER_API_KEY` → สำคัญที่สุดสำหรับแก้ CAPTCHA
-- `PROXIES` → ใช้ Residential Proxy ไทย
-- `ACCOUNTS` → ใส่หลายบัญชีได้
-- `HEADLESS=false` → แนะนำให้เห็นเบราว์เซอร์
+## Disabled
 
-### 2. การรันบอท
-- เปิด Terminal แล้วพิมพ์ `node ttm-ticket-bot-v2.js`
-- กด F9 (ถ้าใช้ Userscript) หรือดู log ใน terminal
+Automated CAPTCHA solving, stealth browsing, and automatic ticket purchasing are disabled in this cleaned-up build.
 
-### 3. การใช้งานขั้นสูง
-- เปลี่ยน `TARGET_ZONE` เป็นชื่อโซนที่ต้องการ (VIP, CAT1, A1 ฯลฯ)
-- เปิดหลาย Terminal เพื่อรันหลายบัญชีพร้อมกัน
-- ดู log ได้ที่โฟลเดอร์ `logs/`
+## Setup
 
-### 4. คำเตือนความปลอดภัย
-- ใช้ด้วยความเสี่ยงของคุณเอง
-- TTM มีระบบตรวจจับบอทเข้มงวด
-- ไม่แนะนำให้ใช้เพื่อ scalping จำนวนมาก
+```bash
+npm install
+npm run dev
+```
 
-## การอัพเกรดเป็น Dashboard (Next.js)
-ต้องการเวอร์ชันมี UI Dashboard ไหม? บอกได้เลย
+Open `http://localhost:3000`.
+
+## Logs
+
+The log stream reads from:
+
+```text
+logs/bot.log
+```
+
+Create that file or let another local process write to it if you want lines to appear in the Live Logs page.
+
+## Account Status
+
+The dashboard reads account status from:
+
+```text
+status.json
+```
+
+Expected shape:
+
+```json
+{
+  "user@example.com": {
+    "email": "user@example.com",
+    "event": "https://example.com/event",
+    "status": "running",
+    "lastAction": "Checking event page",
+    "timestamp": "2026-06-08T10:00:00.000Z"
+  }
+}
+```
