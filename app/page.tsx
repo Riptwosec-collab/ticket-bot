@@ -1,150 +1,183 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Play, Square, Activity, Users, BookOpen } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Activity, BookOpen, FileText, Play, ShieldAlert, Square, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 
+type BotStatus = {
+  email: string;
+  proxy: string;
+  status: string;
+  zone: string;
+  lastAction: string;
+};
+
 export default function Dashboard() {
-  const [bots, setBots] = useState<any[]>([]);
+  const [bots, setBots] = useState<BotStatus[]>([]);
   const [isRunning, setIsRunning] = useState(false);
+  const [message, setMessage] = useState('Ready');
+
+  async function refreshStatus() {
+    const res = await fetch('/api/status', { cache: 'no-store' });
+    const data = await res.json();
+    setBots(data.bots || []);
+    setIsRunning(Boolean(data.isRunning));
+    setMessage(data.message || 'Ready');
+  }
 
   const startAllBots = async () => {
     try {
       const res = await fetch('/api/start-bot', { method: 'POST' });
-      if (res.ok) {
-        setIsRunning(true);
-        alert('🚀 บอททั้งหมดเริ่มทำงานแล้ว!');
-      }
-    } catch (error) {
-      alert('เกิดข้อผิดพลาด');
+      const data = await res.json();
+      setMessage(data.message || 'Start request completed');
+      await refreshStatus();
+    } catch {
+      setMessage('Unable to send start request.');
     }
   };
 
   const stopAllBots = async () => {
     try {
-      await fetch('/api/stop-bot', { method: 'POST' });
-      setIsRunning(false);
-      alert('บอทหยุดทำงานแล้ว');
-    } catch (error) {
-      alert('เกิดข้อผิดพลาด');
+      const res = await fetch('/api/stop-bot', { method: 'POST' });
+      const data = await res.json();
+      setMessage(data.message || 'Stopped');
+      await refreshStatus();
+    } catch {
+      setMessage('Unable to send stop request.');
     }
   };
 
   useEffect(() => {
-    const interval = setInterval(async () => {
-      try {
-        const res = await fetch('/api/status');
-        const data = await res.json();
-        setBots(data.bots || []);
-      } catch (_) {}
+    refreshStatus().catch(() => undefined);
+    const interval = setInterval(() => {
+      refreshStatus().catch(() => undefined);
     }, 3000);
+
     return () => clearInterval(interval);
   }, []);
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white p-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-10">
+    <main className="min-h-screen bg-zinc-950 p-6 text-white md:p-8">
+      <div className="mx-auto max-w-7xl">
+        <header className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h1 className="text-6xl font-bold tracking-tighter">🎟️ TTM Bot v2.1</h1>
-            <p className="text-xl text-zinc-400 mt-2">Ultra Stealth Ticket Bot</p>
+            <h1 className="text-4xl font-bold tracking-normal md:text-5xl">Ticket Bot Dashboard</h1>
+            <p className="mt-2 text-lg text-zinc-400">Local control panel and live log viewer</p>
           </div>
 
-          <div className="flex items-center gap-3">
-            <Link 
-              href="/logs" 
-              className="flex items-center gap-2 bg-zinc-900 hover:bg-zinc-800 px-6 py-3.5 rounded-2xl font-semibold text-lg"
+          <nav className="flex flex-wrap items-center gap-3">
+            <Link
+              href="/logs"
+              className="flex items-center gap-2 rounded-lg bg-zinc-900 px-4 py-3 font-semibold hover:bg-zinc-800"
             >
-              📜 Live Logs
+              <FileText className="h-5 w-5" />
+              Live Logs
             </Link>
 
-            <Link 
-              href="/guide" 
-              className="flex items-center gap-2 bg-zinc-900 hover:bg-zinc-800 px-6 py-3.5 rounded-2xl font-semibold text-lg"
+            <Link
+              href="/guide"
+              className="flex items-center gap-2 rounded-lg bg-zinc-900 px-4 py-3 font-semibold hover:bg-zinc-800"
             >
-              <BookOpen className="w-5 h-5" /> วิธีใช้งาน
+              <BookOpen className="h-5 w-5" />
+              Guide
             </Link>
 
-            <button 
-              onClick={startAllBots} 
+            <button
+              onClick={startAllBots}
               disabled={isRunning}
-              className="flex items-center gap-3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 px-8 py-3.5 rounded-2xl font-semibold text-lg"
+              className="flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-3 font-semibold hover:bg-emerald-700 disabled:opacity-60"
             >
-              <Play className="w-5 h-5" /> เริ่มบอททั้งหมด
+              <Play className="h-5 w-5" />
+              Start
             </button>
 
-            <button 
+            <button
               onClick={stopAllBots}
-              className="flex items-center gap-3 bg-red-600 hover:bg-red-700 px-8 py-3.5 rounded-2xl font-semibold text-lg"
+              className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-3 font-semibold hover:bg-red-700"
             >
-              <Square className="w-5 h-5" /> หยุดทั้งหมด
+              <Square className="h-5 w-5" />
+              Stop
             </button>
-          </div>
-        </div>
+          </nav>
+        </header>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-8">
-            <div className="flex items-center gap-3 text-emerald-400 mb-4">
-              <Activity className="w-6 h-6" />
-              <span className="font-medium text-lg">บอทที่กำลังทำงาน</span>
+        <section className="mb-8 rounded-lg border border-amber-800 bg-amber-950/40 p-5 text-amber-100">
+          <div className="flex gap-3">
+            <ShieldAlert className="mt-0.5 h-6 w-6 shrink-0 text-amber-300" />
+            <div>
+              <h2 className="font-semibold">Automation guard enabled</h2>
+              <p className="mt-1 text-sm text-amber-100/80">
+                The dashboard is usable, but automated CAPTCHA solving and automatic ticket purchasing are disabled.
+              </p>
             </div>
-            <div className="text-7xl font-bold tracking-tighter">{bots.length}</div>
           </div>
+        </section>
 
-          <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-8">
-            <div className="flex items-center gap-3 text-blue-400 mb-4">
-              <Users className="w-6 h-6" />
-              <span className="font-medium text-lg">บัญชีทั้งหมด</span>
+        <section className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-6">
+            <div className="mb-3 flex items-center gap-3 text-emerald-400">
+              <Activity className="h-6 w-6" />
+              <span className="font-medium">Running processes</span>
             </div>
-            <div className="text-7xl font-bold tracking-tighter">8</div>
+            <div className="text-5xl font-bold">{bots.length}</div>
           </div>
 
-          <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-8">
-            <div className="flex items-center gap-3 text-amber-400 mb-4">
-              <span className="font-medium text-lg">CAPTCHA ที่แก้ได้วันนี้</span>
+          <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-6">
+            <div className="mb-3 flex items-center gap-3 text-sky-400">
+              <Users className="h-6 w-6" />
+              <span className="font-medium">Configured accounts</span>
             </div>
-            <div className="text-7xl font-bold tracking-tighter">47</div>
+            <div className="text-5xl font-bold">0</div>
           </div>
-        </div>
 
-        {/* Bot Status */}
-        <h2 className="text-3xl font-semibold mb-6">สถานะบอท</h2>
+          <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-6">
+            <div className="mb-3 text-zinc-400">Last message</div>
+            <p className="min-h-16 text-base text-zinc-200">{message}</p>
+          </div>
+        </section>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {bots.length > 0 ? (
-            bots.map((bot, index) => (
-              <motion.div 
-                key={index} 
-                whileHover={{ scale: 1.02 }}
-                className="bg-zinc-900 border border-zinc-800 rounded-3xl p-7"
-              >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <div className="font-semibold text-2xl tracking-tight">{bot.email}</div>
-                    <div className="text-sm text-zinc-400 mt-1">Proxy: {bot.proxy}</div>
+        <section>
+          <h2 className="mb-4 text-2xl font-semibold">Status</h2>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {bots.length > 0 ? (
+              bots.map((bot, index) => (
+                <motion.div
+                  key={`${bot.email}-${index}`}
+                  whileHover={{ scale: 1.01 }}
+                  className="rounded-lg border border-zinc-800 bg-zinc-900 p-6"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <div className="text-xl font-semibold">{bot.email}</div>
+                      <div className="mt-1 text-sm text-zinc-400">Proxy: {bot.proxy}</div>
+                    </div>
+                    <div className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-medium text-emerald-400">
+                      {bot.status}
+                    </div>
                   </div>
-                  <div className={`px-4 py-1.5 rounded-full text-xs font-medium ${bot.status === 'running' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-zinc-700 text-zinc-400'}`}>
-                    {bot.status}
+                  <div className="mt-6 space-y-2 text-sm">
+                    <div className="flex justify-between gap-4">
+                      <span className="text-zinc-400">Zone</span>
+                      <span className="font-medium">{bot.zone}</span>
+                    </div>
+                    <div className="flex justify-between gap-4">
+                      <span className="text-zinc-400">Last action</span>
+                      <span className="text-right font-medium">{bot.lastAction}</span>
+                    </div>
                   </div>
-                </div>
-                <div className="mt-8 space-y-2 text-sm">
-                  <div className="flex justify-between"><span className="text-zinc-400">Zone</span><span className="font-medium">{bot.zone}</span></div>
-                  <div className="flex justify-between"><span className="text-zinc-400">Last Action</span><span className="font-medium">{bot.lastAction}</span></div>
-                </div>
-              </motion.div>
-            ))
-          ) : (
-            <div className="col-span-full bg-zinc-900 border border-zinc-800 rounded-3xl p-16 text-center">
-              <div className="text-6xl mb-6">🤖</div>
-              <h3 className="text-3xl font-semibold mb-3">ยังไม่มีบอทที่กำลังทำงาน</h3>
-              <p className="text-zinc-400 text-lg">กดปุ่ม "เริ่มบอททั้งหมด" เพื่อเริ่มทำงาน</p>
-            </div>
-          )}
-        </div>
+                </motion.div>
+              ))
+            ) : (
+              <div className="col-span-full rounded-lg border border-zinc-800 bg-zinc-900 p-12 text-center">
+                <h3 className="text-2xl font-semibold">No local process is running</h3>
+                <p className="mt-2 text-zinc-400">Use Live Logs to inspect output written to logs/bot.log.</p>
+              </div>
+            )}
+          </div>
+        </section>
       </div>
-    </div>
+    </main>
   );
 }

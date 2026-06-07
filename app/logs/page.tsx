@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
-import { ArrowLeft, Trash2, Pause, Play } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { ArrowLeft, Pause, Play, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function LiveLogs() {
@@ -10,16 +10,28 @@ export default function LiveLogs() {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const es = new EventSource('/api/logs/stream');
-    es.onmessage = (e) => {
-      if (!isPaused) {
-        try {
-          const data = JSON.parse(e.data);
-          if (data.line) setLogs(prev => [...prev.slice(-200), data.line]);
-        } catch (_) {}
+    const events = new EventSource('/api/logs/stream');
+
+    events.onmessage = (event) => {
+      if (isPaused) return;
+
+      try {
+        const data = JSON.parse(event.data);
+        if (data.line) {
+          setLogs((previous) => [...previous.slice(-200), data.line]);
+        }
+      } catch {
+        // Ignore malformed SSE messages.
       }
     };
-    return () => es.close();
+
+    events.onerror = () => {
+      if (!isPaused) {
+        setLogs((previous) => [...previous.slice(-200), 'Log stream disconnected. Retrying...']);
+      }
+    };
+
+    return () => events.close();
   }, [isPaused]);
 
   useEffect(() => {
@@ -29,30 +41,55 @@ export default function LiveLogs() {
   }, [logs, isPaused]);
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white p-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
+    <main className="min-h-screen bg-zinc-950 p-6 text-white md:p-8">
+      <div className="mx-auto max-w-7xl">
+        <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <Link href="/" className="flex items-center gap-2 text-zinc-400 hover:text-white">
-            <ArrowLeft /> กลับ Dashboard
+            <ArrowLeft className="h-5 w-5" />
+            Back to Dashboard
           </Link>
           <div className="flex gap-3">
-            <button onClick={() => setIsPaused(!isPaused)} className="px-5 py-2.5 bg-zinc-900 rounded-2xl flex items-center gap-2">
-              {isPaused ? <Play /> : <Pause />} {isPaused ? 'Resume' : 'Pause'}
+            <button
+              onClick={() => setIsPaused((value) => !value)}
+              className="flex items-center gap-2 rounded-lg bg-zinc-900 px-4 py-2.5 hover:bg-zinc-800"
+            >
+              {isPaused ? <Play className="h-5 w-5" /> : <Pause className="h-5 w-5" />}
+              {isPaused ? 'Resume' : 'Pause'}
             </button>
-            <button onClick={() => setLogs([])} className="px-5 py-2.5 bg-red-600 rounded-2xl flex items-center gap-2">
-              <Trash2 /> Clear
+            <button
+              onClick={() => setLogs([])}
+              className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 hover:bg-red-700"
+            >
+              <Trash2 className="h-5 w-5" />
+              Clear
             </button>
           </div>
-        </div>
+        </header>
 
-        <div ref={containerRef} className="bg-black border border-zinc-800 rounded-3xl p-6 h-[78vh] overflow-y-auto font-mono text-sm">
+        <section
+          ref={containerRef}
+          className="h-[78vh] overflow-y-auto rounded-lg border border-zinc-800 bg-black p-5 font-mono text-sm"
+        >
           {logs.length === 0 ? (
-            <div className="h-full flex items-center justify-center text-zinc-500">รอ log จากบอท...</div>
+            <div className="flex h-full items-center justify-center text-zinc-500">Waiting for logs...</div>
           ) : (
-            logs.map((log, i) => <div key={i} className={log.includes('✅') ? 'text-emerald-400' : log.includes('❌') ? 'text-red-400' : ''}>{log}</div>)
+            logs.map((log, index) => (
+              <div
+                key={`${log}-${index}`}
+                className={
+                  log.toLowerCase().includes('error')
+                    ? 'text-red-400'
+                    : log.toLowerCase().includes('success')
+                      ? 'text-emerald-400'
+                      : 'text-zinc-200'
+                }
+              >
+                {log}
+              </div>
+            ))
           )}
-        </div>
+        </section>
       </div>
-    </div>
+    </main>
   );
 }

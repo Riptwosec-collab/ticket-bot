@@ -3,8 +3,8 @@ import './globals.css';
 import { Toaster } from 'sonner';
 
 export const metadata: Metadata = {
-  title: 'TTM Bot v2.1',
-  description: 'Ultra Stealth Ticket Bot',
+  title: 'Ticket Dashboard',
+  description: 'Local dashboard and log viewer',
 };
 
 export default function RootLayout({
